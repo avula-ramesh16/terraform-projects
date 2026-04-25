@@ -1,5 +1,6 @@
 name: Terraform CI
 
+
 on:
   push:
     branches:
@@ -8,6 +9,7 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout Code
@@ -29,4 +31,8 @@ jobs:
 
       - name: Terraform Plan
         run: terraform plan
+        working-directory: envs/dev
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
         working-directory: envs/dev
