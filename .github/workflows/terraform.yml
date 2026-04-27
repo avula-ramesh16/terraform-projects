@@ -5,7 +5,7 @@ on:
     branches:
       - main
 
-# 🔥 GLOBAL CONCURRENCY FIX (prevents overlapping runs per branch)
+# Prevent overlapping runs
 concurrency:
   group: terraform-${{ github.ref }}
   cancel-in-progress: true
@@ -30,6 +30,14 @@ jobs:
 
       - name: Terraform Init
         run: terraform init -reconfigure
+        working-directory: envs/dev
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+        working-directory: envs/dev
+
+      - name: Terraform Validate
+        run: terraform validate
         working-directory: envs/dev
 
       - name: Terraform Plan
@@ -62,6 +70,14 @@ jobs:
         run: terraform init -reconfigure
         working-directory: envs/staging
 
+      - name: Terraform Format Check
+        run: terraform fmt -check
+        working-directory: envs/staging
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: envs/staging
+
       - name: Terraform Plan
         run: terraform plan
         working-directory: envs/staging
@@ -73,36 +89,45 @@ jobs:
 
   # ---------------- PROD ----------------
   prod:
-  runs-on: ubuntu-latest
-  needs: staging
-  environment: production
+    runs-on: ubuntu-latest
+    needs: staging
+    environment: production
+    timeout-minutes: 15
 
-  steps:
-    - uses: actions/checkout@v3
+    steps:
+      - uses: actions/checkout@v3
 
-    - uses: hashicorp/setup-terraform@v2
+      - uses: hashicorp/setup-terraform@v2
 
-    - uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
+      - uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-    - name: Terraform Init
-      run: terraform init
-      working-directory: envs/prod
+      - name: Terraform Init
+        run: terraform init -reconfigure
+        working-directory: envs/prod
 
-    # 👇 STEP 1: PLAN
-    - name: Terraform Plan
-      run: terraform plan -out=tfplan
-      working-directory: envs/prod
+      - name: Terraform Format Check
+        run: terraform fmt -check
+        working-directory: envs/prod
 
-    # 👇 STEP 2: SHOW PLAN (IMPORTANT)
-    - name: Show Plan
-      run: terraform show tfplan
-      working-directory: envs/prod
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: envs/prod
 
-    # 👇 STEP 3: APPLY ONLY AFTER APPROVAL
-    - name: Terraform Apply
-      run: terraform apply -auto-approve tfplan
-      working-directory: envs/prod
+      # ✅ PLAN SAVED
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+        working-directory: envs/prod
+
+      # ✅ PLAN REVIEW
+      - name: Show Plan
+        run: terraform show tfplan
+        working-directory: envs/prod
+
+      # ✅ APPLY AFTER APPROVAL
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+        working-directory: envs/prod
