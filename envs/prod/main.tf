@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket = "terraform-state-ramesh-069"
-    key = "dev/terraform.tfstate"
+    key = "prod/terraform.tfstate"
     region = "us-east-1"
     dynamodb_table = "tf_locks"
   }
@@ -10,9 +10,8 @@ terraform {
 provider "aws" {
   region = "us-east-1"
 }
-variable "vpc_cidr" {
-  
-}
+variable "vpc_cidr" {}
+
 module "vpc" {
   source = "../../modules/vpc"
 
@@ -21,8 +20,8 @@ module "vpc" {
   public_subnet_cidr   = "10.0.1.0/24"
   private_subnet_cidr  = "10.0.2.0/24"
 }
-variable "env" {}
 variable "instance_type" {}
+variable "env" {}
 module "ec2" {
   source = "../../modules/ec2"
   

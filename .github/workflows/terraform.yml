@@ -1,5 +1,4 @@
-name: Terraform CI
-
+name: Terraform Multi-Env CI
 
 on:
   push:
@@ -7,32 +6,66 @@ on:
       - main
 
 jobs:
-  terraform:
+
+  # ---------------- DEV ----------------
+  dev:
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v3
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name: Configure AWS Credentials
+      - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-        
-      - name: Terraform Init
+
+      - name: Init
         run: terraform init
         working-directory: envs/dev
 
-      - name: Terraform Plan
+      - name: Plan
         run: terraform plan
         working-directory: envs/dev
 
-      - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+      - name: Apply (AUTO)
+        run: terraform apply -auto-approve
         working-directory: envs/dev
+
+
+  # ---------------- PROD ----------------
+  prod:
+    runs-on: ubuntu-latest
+    needs: dev   # 👈 runs after dev
+    environment: production   # 👈 triggers approval
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Init
+        run: terraform init
+        working-directory: envs/prod
+
+      - name: Plan
+        run: terraform plan
+        working-directory: envs/prod
+
+      - name: Apply (APPROVAL REQUIRED)
+        run: terraform apply -auto-approve
+        working-directory: envs/prod

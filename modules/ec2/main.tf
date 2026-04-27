@@ -1,9 +1,9 @@
 
 resource "aws_key_pair" "deployer" {
-    key_name = "my-key"
-    public_key = file("my-key.pub")
-  
+  key_name   = "my-key-${var.env}"
+  public_key = file("my-key.pub")
 }
+
 
 resource "aws_instance" "my_ec2"{
     ami = data.aws_ami.latest_amazon_linux.id
