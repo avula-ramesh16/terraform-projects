@@ -5,11 +5,17 @@ on:
     branches:
       - main
 
+# 🔥 GLOBAL CONCURRENCY FIX (prevents overlapping runs per branch)
+concurrency:
+  group: terraform-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
 
   # ---------------- DEV ----------------
   dev:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v3
@@ -22,20 +28,24 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - run: terraform init
+      - name: Terraform Init
+        run: terraform init -reconfigure
         working-directory: envs/dev
 
-      - run: terraform plan
+      - name: Terraform Plan
+        run: terraform plan
         working-directory: envs/dev
 
-      - run: terraform apply -auto-approve
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
         working-directory: envs/dev
 
 
   # ---------------- STAGING ----------------
   staging:
     runs-on: ubuntu-latest
-    needs: dev   # 👈 runs after dev
+    needs: dev
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v3
@@ -48,21 +58,25 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - run: terraform init
+      - name: Terraform Init
+        run: terraform init -reconfigure
         working-directory: envs/staging
 
-      - run: terraform plan
+      - name: Terraform Plan
+        run: terraform plan
         working-directory: envs/staging
 
-      - run: terraform apply -auto-approve
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
         working-directory: envs/staging
 
 
   # ---------------- PROD ----------------
   prod:
     runs-on: ubuntu-latest
-    needs: staging   # 👈 runs after staging
-    environment: production   # 👈 approval required
+    needs: staging
+    environment: production   # 👈 manual approval
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v3
@@ -75,11 +89,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - run: terraform init
+      - name: Terraform Init
+        run: terraform init -reconfigure
         working-directory: envs/prod
 
-      - run: terraform plan
+      - name: Terraform Plan
+        run: terraform plan
         working-directory: envs/prod
 
-      - run: terraform apply -auto-approve
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
         working-directory: envs/prod
