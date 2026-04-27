@@ -83,8 +83,3 @@ jobs:
 
       - run: terraform apply -auto-approve
         working-directory: envs/prod
-
-        concurrency:
-  group: terraform-dev
-  cancel-in-progress: true
-       
