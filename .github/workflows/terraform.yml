@@ -73,30 +73,36 @@ jobs:
 
   # ---------------- PROD ----------------
   prod:
-    runs-on: ubuntu-latest
-    needs: staging
-    environment: production   # 👈 manual approval
-    timeout-minutes: 20
+  runs-on: ubuntu-latest
+  needs: staging
+  environment: production
 
-    steps:
-      - uses: actions/checkout@v3
+  steps:
+    - uses: actions/checkout@v3
 
-      - uses: hashicorp/setup-terraform@v2
+    - uses: hashicorp/setup-terraform@v2
 
-      - uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+    - uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
 
-      - name: Terraform Init
-        run: terraform init -reconfigure
-        working-directory: envs/prod
+    - name: Terraform Init
+      run: terraform init
+      working-directory: envs/prod
 
-      - name: Terraform Plan
-        run: terraform plan
-        working-directory: envs/prod
+    # 👇 STEP 1: PLAN
+    - name: Terraform Plan
+      run: terraform plan -out=tfplan
+      working-directory: envs/prod
 
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
-        working-directory: envs/prod
+    # 👇 STEP 2: SHOW PLAN (IMPORTANT)
+    - name: Show Plan
+      run: terraform show tfplan
+      working-directory: envs/prod
+
+    # 👇 STEP 3: APPLY ONLY AFTER APPROVAL
+    - name: Terraform Apply
+      run: terraform apply -auto-approve tfplan
+      working-directory: envs/prod
