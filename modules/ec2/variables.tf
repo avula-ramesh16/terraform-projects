@@ -7,6 +7,6 @@ variable "instance_type" {
 }
 variable "env" {
   description = "Environment name"
-  type = string
-  
+  type        = string
+
 }

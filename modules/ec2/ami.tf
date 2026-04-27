@@ -1,13 +1,13 @@
-data "aws_ami" "latest_amazon_linux"{
-    most_recent = true
-    owners = ["amazon"]
+data "aws_ami" "latest_amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
 
-    filter {
-        name = "name"
-        values = ["amzn2-ami-hvm-*"]
-    }
-    filter {
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*"]
+  }
+  filter {
     name   = "architecture"
-    values = ["x86_64"]   # ✅ IMPORTANT FIX
+    values = ["x86_64"] # ✅ IMPORTANT FIX
   }
 }
